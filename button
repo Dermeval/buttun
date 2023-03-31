@@ -1,0 +1,36 @@
+.global _start
+
+_start:
+        LDR R0, =fileName     @ R0 = nome do arquivo
+        MOV R1, #2        @ Move um hexadecimal para R1
+        MOV R7, #5            @ sys_open
+        SWI 0
+        MOV R4, R0
+        MOV R0, #0
+        @sys_mmap2
+        LDR R1, =pagelen
+        MOV R2, #3 @prot read an write
+        MOV R3, #1 @map shared
+        LDR R5, =gpioaddr
+        LDR R5, [R5]
+        MOV R7, #192 @sys_mmap2
+        SVC 0
+        MOV R8, R0
+        LDR R6, [R8, #0x804]
+        BIC R6, R6, #0b111
+        ORR R6, R6, #0b001
+        STR R6, [R8, #0x804] @ Seta PA8 como saida
+
+        LDR R0, [R8, #0x810] @ Endereco do registrador de dados
+        MOV R1, #1 @0000000....00001
+        LSL R1, R1, #8 @00..10000000
+        BIC R0, R0, R1
+        STR R0, [R8, #0x810] @ Acende o LED
+        MOV R0, #0
+        MOV R7, #1
+        SVC 0
+
+.data
+        fileName: .asciz "/dev/mem" @ Caminho do arquivo para mapeamento da memória virtual
+        gpioaddr: .word 0x1C20 @ Endereco base PIO / 4096
+        pagelen: .word 0x1000
